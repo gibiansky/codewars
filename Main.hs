@@ -26,8 +26,10 @@ main = do
 
     forever $ do
       -- read an update
-      UpdateMessage update <- get
-      modifyMVar_ stateVar (updateState update)
+      message <- get
+      case message of
+        UpdateMessage update ->
+          modifyMVar_ stateVar (return . updateState update)
 
       -- compute orders and send them
       orders <- doOrders <$> readMVar stateVar
@@ -35,6 +37,9 @@ main = do
 
 doOrders :: Game -> Command
 doOrders = error "not implemented yet"
+
+updateState :: GameUpdate -> Game -> Game
+updateState update game = game
 
 {-
 

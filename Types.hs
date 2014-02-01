@@ -102,6 +102,7 @@ data Game = Game {
   _myGuid :: String,
   _gameMap :: Map,
   _players :: [Player],
+  _stores :: [Store],
   _companies :: [Company],
   _passengers :: [Passenger],
   _powerups :: [Powerup]
@@ -129,5 +130,11 @@ data Command
     | CardOrder OrderType Powerup
     deriving Show
 
+data GameUpdate = GameUpdate {
+                
+    }
+    deriving Show
+
 data Message = SetupMessage Game
+             | UpdateMessage GameUpdate
              deriving Show

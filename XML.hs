@@ -200,6 +200,7 @@ parseSetup string =
           _myGuid = myId,
           _gameMap = map,
           _players = players,
+          _stores = stores,
           _companies = companies,
           _passengers = passengers,
           _powerups = powerups
