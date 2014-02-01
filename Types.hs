@@ -10,7 +10,17 @@ data Location = Loc {
 
 makeLenses ''Location
 
-data TileType = BusStop | CoffeeBuilding | CoffeeStop | CompanyTile | Park | Road 
+
+data RoadDirection = NORTH_SOUTH | EAST_WEST | INTERSECTION | NORTH_UTURN | EAST_UTURN | SOUTH_UTURN | WEST_UTURN | T_NORTH | T_EAST | T_SOUTH | T_WEST | CURVE_NE | CURVE_NW | CURVE_SE | CURVE_SW
+  deriving Show
+makeLenses ''RoadDirection
+
+data Road = Road {
+  direction :: RoadDirection
+}
+makeLenses ''Road
+
+data TileType = BusStop | CoffeeBuilding | CoffeeStop | CompanyTile | Park | Road RoadDirection
               deriving Show
 makeLenses ''TileType
 
