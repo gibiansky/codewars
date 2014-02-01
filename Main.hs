@@ -24,6 +24,21 @@ main = do
     send "<join name='hi' school='foobar' language='haskell'/>"
     msg <- get
     putStrLn$ pack msg
+    -- Join the game
+    send $ Join "Brainfuck" "ÜNICÖDE Y Ü NO CÓDE?!" "Harvard Med" 
+
+    stateVar <- newEmptyMVar
+    forever $ do
+      -- intialize game
+      SetupMessage game <- get
+      putMVar stateVar game
+
+      -- send initial orders
+      let orders = doOrders game 
+      send orders
+
+doOrders :: Game -> Command
+doOrders = undefined
 
 
 herusticFun :: Passenger -> Passenger -> Int
@@ -48,3 +63,6 @@ findBestPair game =
     
     
     
+=======
+
+>>>>>>> 05ef89e5a0546beb88d5396a296d9fb9655bccc4

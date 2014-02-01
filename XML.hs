@@ -1,6 +1,6 @@
 {-# LANGUAGE RankNTypes, OverloadedStrings, NoImplicitPrelude #-}
 module XML (
-  readSetup,
+  parseMessage,
   encodeCommand
   ) where
 
@@ -10,6 +10,8 @@ import Text.XML as XML
 import Text.XML.Lens as Lens
 import Control.Lens
 import qualified Data.Map as Map
+import Data.List.Utils (split)
+import Data.Maybe (fromMaybe)
 
 import Types
 
@@ -37,12 +39,17 @@ parseTile tile =
   where
     parseRoad x y tile =
       let dir = parseDir $ tile ^. attr "direction"
-          stop = parseStop <$> tile ^. attribute "stop-sign"  in
+          stopMay = parseStop . unpack <$> tile ^. attribute "stop-sign" 
+          stop = fromMaybe [] stopMay in
         Tile (Loc (int x) (int y)) (Road dir stop)
-    parseStop "STOP_EAST" =  StopEast
-    parseStop "STOP_WEST" =  StopWest
-    parseStop "STOP_NORTH" =  StopNorth
-    parseStop "STOP_SOUTH" =  StopSouth
+    parseStop "STOP_EAST" =  [StopEast]
+    parseStop "STOP_WEST" =  [StopWest]
+    parseStop "STOP_NORTH" =  [StopNorth]
+    parseStop "STOP_SOUTH" =  [StopSouth]
+    parseStop compound = 
+      let noSpaces = filter (/= ' ') compound
+          stops = split "," compound in
+        concatMap parseStop stops
 
     parseDir dir = 
       case dir of
@@ -60,6 +67,8 @@ parseTile tile =
         "CURVE_NE"     ->              CURVE_NE
         "CURVE_NW"     ->              CURVE_NW
         "CURVE_SW"     ->              CURVE_SW
+        "CURVE_SE"     ->             CURVE_SE
+        other -> error $ "unknown direction " ++ unpack other
 
 parseMap :: Element -> Map
 parseMap setup = theMap
@@ -161,19 +170,19 @@ parsePassengers companies setup = passengers
       let names = pass ^.. subnodes "enemy" . text . to unpack in
         map (getPassenger passengers) names
 
-readSetup :: String -> IO Game
-readSetup string = 
+parseSetup :: String -> Game
+parseSetup string = 
   let doc = parseText_ def (pack string) in
     case doc ^.. root . subnodes "setup" of
       [] -> error "No setup tag."
-      [setup] -> do
+      [setup] ->
         let map = parseMap setup
             players = parsePlayers setup
             stores = parseStores setup
             companies = parseCompanies setup
             passengers = parsePassengers companies setup
-            powerups = parsePowerups companies passengers setup
-        return Game {
+            powerups = parsePowerups companies passengers setup in
+        Game {
           _gameMap = map,
           _players = players,
           _companies = companies,
@@ -182,7 +191,7 @@ readSetup string =
         }
 
 encodeCommand :: Command -> String
-encodeCommand cmd = unpack $ renderText def doc
+encodeCommand cmd = drop 1 $  dropWhile (/= '>') $ unpack $ renderText def doc
   where
     prologue = Prologue [] Nothing []
     doc = Document prologue root []
@@ -230,3 +239,16 @@ encodeCommand cmd = unpack $ renderText def doc
             RelocateAllCars -> [("card", "RELOCATE_ALL_CARS")]
             RelocateAllPassengers -> [("card", "RELOCATE_ALL_PASSENGERS")]
             StopCar -> [("card", "STOP_CAR")]
+
+
+data MessageType = Setup
+
+parseMessage :: String -> Message
+parseMessage string =
+  case find (isMessageType string) [Setup] of
+    Just Setup -> SetupMessage $ parseSetup string
+    Nothing -> error "Unknown message type."
+  where
+    parsed = parseText_ def (pack string)
+    isMessageType str Setup =
+      not . null $ parsed ^.. root . subnodes "setup"

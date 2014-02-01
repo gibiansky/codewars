@@ -23,7 +23,16 @@ executable codewars
                        xml-conduit >=1.1 && <1.2,
                        xml-lens,
                        lens,
-                       classy-prelude
+                       classy-prelude,
+                       astar,
+                       network-simple,
+                       containers,
+                       bytestring,
+                       binary,
+                       network,
+                       xml2html,
+                       blaze-html,
+                       MissingH
 
   -- hs-source-dirs:      
   default-language:    Haskell2010
