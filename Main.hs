@@ -3,5 +3,6 @@ module Main where
 import XML
 
 main = do 
-  parsed <- readSetup "test.xml"
+  contents <- readFile "test.xml"
+  parsed <- readSetup contents
   print "Parsed."
