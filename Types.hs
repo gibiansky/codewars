@@ -53,12 +53,15 @@ data Company = Company {
   deriving Show
 makeLenses ''Company
 
+data PassengerStatus = Transit | Waiting deriving Show
+
 data Passenger = Passenger {
   _worth :: Int,
   _route :: [Company],
   _enemies :: [Passenger],
   _passengerName :: String,
-  _passengerLoc :: Location
+  _passengerLoc :: Location,
+  _passengerStatus :: PassengerStatus
   }
   deriving Show
 makeLenses ''Passenger
