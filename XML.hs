@@ -166,10 +166,15 @@ parsePassengers companies setup = passengers
       Passenger {
         _worth = int $ pass ^. attr "points-delivered",
         _passengerName = unpack $ pass ^. attr "name",
-        _passengerLoc = error "No passenger loc: nothing but setup parsed yet.",
+        _passengerLoc = parsePassLoc pass,
         _route = parseRoute pass,
-        _enemies = parseEnemies pass
+        _enemies = parseEnemies pass,
+        _passengerStatus = Waiting
         }
+    parsePassLoc pass =
+      let lobby = pass ^. attr "lobby" . to unpack in
+        getCompany companies lobby ^. companyLoc
+
     parseRoute pass =
       let names = pass ^.. subnodes "route" . text . to unpack in
         map (getCompany companies) names

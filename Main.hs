@@ -16,9 +16,6 @@ main = do
   putStrLn$ "Connecting to "++serverAddr
   
   runClient (unpack serverAddr) "1707" $ \(send, get) -> do
-    send "<join name='hi' school='foobar' language='haskell'/>"
-    msg <- get
-    putStrLn$ pack msg
     -- Join the game
     send $ Join "Brainfuck" "ÜNICÖDE Y Ü NO CÓDE?!" "Harvard Med" 
 
@@ -35,9 +32,10 @@ main = do
 doOrders :: Game -> Command
 doOrders = error "not implemented yet"
 
+{-
 
 herusticFun :: Passenger -> Passenger -> Int
-herusticFun passenger1 passenger2
+herusticFun passenger1 passenger2 = 1
 
 findBestPair :: Game -> Tuple Passenger Passenger
 findBestPair game = 
@@ -51,3 +49,5 @@ findBestPair game =
         (herusticFun passenger1 passenger2)
       )
     ) allPairs
+
+-}
