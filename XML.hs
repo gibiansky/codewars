@@ -91,7 +91,7 @@ parsePowerups companies passengers setup = powerups
           "MOVE_PASSENGER" -> MovePassenger
           "MULT_DELIVERY_QUARTER_SPEED" -> SelfQuarterSpeed
           "RELOCATE_ALL_CARS" -> RelocateAllCars
-          "RELOCATE_ALL_PASSENGERS" -> ReloacteAllPassengers
+          "RELOCATE_ALL_PASSENGERS" -> RelocateAllPassengers
           "STOP_CAR" -> StopCar
           
 
@@ -196,8 +196,13 @@ encodeCommand cmd = unpack $ renderText def doc
       mkEl "join"
           [("language", pack lang), ("name", pack name), ("school", pack school)]
           []
-    mkCmd (Ready locs passes) =
-        mkEl "ready" [] [
+    mkCmd (Ready locs passes) = mkReady "ready" locs passes
+    mkCmd (Move locs passes) = mkReady "move" locs passes
+    mkCmd (CardOrder order powerup) = 
+      mkEl "order" [("action", pack $ show order)] [NodeElement $ powEl powerup]
+
+    mkReady str locs passes =
+        mkEl str [] [
           NodeElement pathEl,
           NodeElement pickupEl
           ]
@@ -208,3 +213,20 @@ encodeCommand cmd = unpack $ renderText def doc
           pickup = pack $ concatMap showPass passes
           showLoc loc = show (loc ^. x) ++ "," ++ show (loc^.y) ++ ";"
           showPass pass = pass ^. passengerName ++ ";"
+
+    powEl pow =
+      mkEl "powerup" (attrs & (mapped . _2) %~ pack) []
+      where 
+        attrs = 
+          case pow of
+            MultDeliverAt comp -> [("card", "MULT_DELIVER_AT_COMPANY"),
+                                  ("company", comp^.companyName)]
+            MultDeliverPassenger pass -> [("card", "MULT_DELIVERING_PASSENGER"),
+                                         ("passenger", pass^.passengerName)]
+            AllOthersQuarterSpeed -> [("card", "ALL_OTHER_CARS_QUARTER_SPEED")]
+            ChangeDestination -> [("card", "CHANGE_DESTINATION")]
+            MovePassenger -> [("card", "MOVE_PASSENGER")]
+            SelfQuarterSpeed -> [("card", "MULT_DELIVERY_QUARTER_SPEED")]
+            RelocateAllCars -> [("card", "RELOCATE_ALL_CARS")]
+            RelocateAllPassengers -> [("card", "RELOCATE_ALL_PASSENGERS")]
+            StopCar -> [("card", "STOP_CAR")]

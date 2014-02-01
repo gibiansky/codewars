@@ -74,7 +74,7 @@ data Powerup
       | SelfQuarterSpeed
       | StopCar
       | RelocateAllCars
-      | ReloacteAllPassengers
+      | RelocateAllPassengers
       deriving Show
 makeLenses ''Powerup
 
@@ -101,6 +101,13 @@ data Game = Game {
   _powerups :: [Powerup]
   }
 
+data OrderType = DrawCard | PlayCard | DiscardCard
+
+instance Show OrderType where
+  show DrawCard = "DRAW"
+  show PlayCard = "PLAY"
+  show DiscardCard = "DISCARD"
+
 -- commands to send
 type Path = [Location]
 type Pickups = [Passenger]
@@ -111,3 +118,5 @@ data Command
         school :: String      
       }
     | Ready Path Pickups
+    | Move Path Pickups
+    | CardOrder OrderType Powerup
