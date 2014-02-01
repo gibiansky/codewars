@@ -20,13 +20,17 @@ main = do
     send $ Join "Brainfuck" "ÜNICÖDE Y Ü NO CÓDE?!" "Harvard Med" 
 
     stateVar <- newEmptyMVar
-    forever $ do
-      -- intialize game
-      SetupMessage game <- get
-      putMVar stateVar game
+    -- intialize game
+    SetupMessage game <- get
+    putMVar stateVar game
 
-      -- send initial orders
-      let orders = doOrders game 
+    forever $ do
+      -- read an update
+      UpdateMessage update <- get
+      modifyMVar_ stateVar (updateState update)
+
+      -- compute orders and send them
+      orders <- doOrders <$> readMVar stateVar
       send orders
 
 doOrders :: Game -> Command
