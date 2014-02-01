@@ -56,13 +56,3 @@ findBestPair game =
         (herusticFun passenger1 passenger2)
       )
     ) allPairs
-    
-    
-    
-    
-    
-    
-    
-=======
-
->>>>>>> 05ef89e5a0546beb88d5396a296d9fb9655bccc4
