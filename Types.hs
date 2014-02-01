@@ -102,9 +102,12 @@ data Game = Game {
   }
 
 -- commands to send
+type Path = [Location]
+type Pickups = [Passenger]
 data Command
      = Join {
         language :: String,
         teamName :: String,
         school :: String      
       }
+    | Ready Path Pickups

@@ -188,8 +188,23 @@ encodeCommand cmd = unpack $ renderText def doc
     doc = Document prologue root []
     root = mkCmd cmd
 
+    mkEl :: Name -> [(Name, Text)] -> [Node] -> Element
+    mkEl name attrs = Element name (Map.fromList attrs)
+
     mkCmd :: Command -> Element
     mkCmd (Join lang name school) =
-      let attrs :: Map.Map Name Text
-          attrs = Map.fromList [("language", pack lang), ("name", pack name), ("school", pack school)] in
-      Element "join" attrs []
+      mkEl "join"
+          [("language", pack lang), ("name", pack name), ("school", pack school)]
+          []
+    mkCmd (Ready locs passes) =
+        mkEl "ready" [] [
+          NodeElement pathEl,
+          NodeElement pickupEl
+          ]
+        where
+          pathEl = mkEl "path" [] [NodeContent path]
+          pickupEl = mkEl "pick-up" [] [NodeContent pickup]
+          path = pack $ concatMap showLoc locs
+          pickup = pack $ concatMap showPass passes
+          showLoc loc = show (loc ^. x) ++ "," ++ show (loc^.y) ++ ";"
+          showPass pass = pass ^. passengerName ++ ";"
