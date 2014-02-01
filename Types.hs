@@ -40,7 +40,7 @@ makeLenses ''Company
 data Passenger = Passenger {
   _worth :: Int,
   _route :: [Company],
-  _enemies :: [String],
+  _enemies :: [Passenger],
   _passengerName :: String
   }
   deriving Show
@@ -72,8 +72,16 @@ data Player = Player {
 makeLenses ''Player
 
 data Store = Store {
-    _storeLocation :: [Location]
+    _storeLocation :: Location,
+    _storeName :: String
   }
   deriving Show
 makeLenses ''Store
 
+data Game = Game {
+  _gameMap :: Map,
+  _players :: [Player],
+  _companies :: [Company],
+  _passengers :: [Passenger],
+  _powerups :: [Powerup]
+  }

@@ -2,4 +2,6 @@ module Main where
 
 import XML
 
-main = XML.test
+main = do 
+  parsed <- readSetup "test.xml"
+  print "Parsed."
