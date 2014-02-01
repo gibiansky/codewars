@@ -22,7 +22,6 @@ parseTileType :: Text -> TileType
 parseTileType "PARK" = Park
 parseTileType "BUS_STOP" = BusStop
 parseTileType "COFFEE_BUILDING" = CoffeeBuilding
-parseTileType "ROAD" = Road
 parseTileType "COMPANY" = CompanyTile
 parseTileType "COFFEE_STOP" = CoffeeStop
 
@@ -30,7 +29,35 @@ parseTile tile =
   let x = tile ^. attr "x"
       y = tile ^. attr "y"
       ty = tile ^. attr "type" in
-    Tile (Loc (int x) (int y)) (parseTileType ty)
+    case ty of
+      "ROAD" -> parseRoad x y tile
+      ty -> Tile (Loc (int x) (int y)) (parseTileType ty)
+  where
+    parseRoad x y tile =
+      let dir = parseDir $ tile ^. attr "direction"
+          stop = parseStop <$> tile ^. attribute "stop-sign"  in
+        Tile (Loc (int x) (int y)) (Road dir stop)
+    parseStop "STOP_EAST" =  StopEast
+    parseStop "STOP_WEST" =  StopWest
+    parseStop "STOP_NORTH" =  StopNorth
+    parseStop "STOP_SOUTH" =  StopSouth
+
+    parseDir dir = 
+      case dir of
+        "NORTH_SOUTH"  ->              NORTH_SOUTH
+        "EAST_WEST"    ->              EAST_WEST
+        "INTERSECTION" ->              INTERSECTION
+        "NORTH_UTURN"  ->              NORTH_UTURN
+        "EAST_UTURN"   ->              EAST_UTURN
+        "SOUTH_UTURN"  ->              SOUTH_UTURN
+        "WEST_UTURN"   ->              WEST_UTURN
+        "T_NORTH"      ->              T_NORTH
+        "T_EAST"       ->              T_EAST
+        "T_SOUTH"      ->              T_SOUTH
+        "T_WEST"       ->              T_WEST
+        "CURVE_NE"     ->              CURVE_NE
+        "CURVE_NW"     ->              CURVE_NW
+        "CURVE_SW"     ->              CURVE_SW
 
 parseMap :: Element -> Map
 parseMap setup = theMap
