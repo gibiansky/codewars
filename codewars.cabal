@@ -32,7 +32,8 @@ executable codewars
                        network,
                        xml2html,
                        blaze-html,
-                       MissingH
+                       MissingH,
+                       array
 
   -- hs-source-dirs:      
   default-language:    Haskell2010

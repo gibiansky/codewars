@@ -2,6 +2,7 @@
 module Types where
 
 import Control.Lens
+import Data.Array
 import Data.Monoid
 
 data Location = Loc {
@@ -40,7 +41,7 @@ data Map = Map {
   _width :: Int,
   _height :: Int,
   _unitsTile :: Int,
-  _tiles :: [Tile]
+  _tiles :: Array (Int, Int) Tile
   }
   deriving Show
 makeLenses ''Map
@@ -95,6 +96,7 @@ data Store = Store {
 makeLenses ''Store
 
 data Game = Game {
+  _myGuid :: String,
   _gameMap :: Map,
   _players :: [Player],
   _companies :: [Company],

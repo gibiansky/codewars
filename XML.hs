@@ -12,6 +12,7 @@ import Control.Lens
 import qualified Data.Map as Map
 import Data.List.Utils (split)
 import Data.Maybe (fromMaybe)
+import Data.Array
 
 import Types
 
@@ -77,11 +78,18 @@ parseMap setup = theMap
     mapSize = (int $ mapEl ^. attr "width", int $ mapEl ^. attr "height") :: (Int, Int)
     unitsTile = int $ mapEl ^. attr "units-tile"
     tiles = map parseTile $ mapEl ^.. subnodes "tile"
+
+    mapWidth = fst mapSize
+    mapHeight = snd mapSize
+    tileArray = array ((0, 0), (mapWidth -1, mapHeight -1)) arrayAssocs
+    arrayAssocs = map toAssoc tiles
+    toAssoc tile = ((tile ^. tileLoc . x, tile ^. tileLoc . y), tile)
+
     theMap = Map {
-      _width = fst mapSize,
-      _height = snd mapSize,
+      _width = mapWidth,
+      _height = mapHeight,
       _unitsTile = unitsTile,
-      _tiles = tiles
+      _tiles = tileArray
       }
 
 parsePowerups :: [Company] -> [Passenger] -> Element -> [Powerup]
@@ -158,7 +166,7 @@ parsePassengers companies setup = passengers
       Passenger {
         _worth = int $ pass ^. attr "points-delivered",
         _passengerName = unpack $ pass ^. attr "name",
-
+        _passengerLoc = error "No passenger loc: nothing but setup parsed yet.",
         _route = parseRoute pass,
         _enemies = parseEnemies pass
         }
@@ -176,13 +184,15 @@ parseSetup string =
     case doc ^.. root . subnodes "setup" of
       [] -> error "No setup tag."
       [setup] ->
-        let map = parseMap setup
+        let myId = unpack $ setup ^. attr "my-guid"
+            map = parseMap setup
             players = parsePlayers setup
             stores = parseStores setup
             companies = parseCompanies setup
             passengers = parsePassengers companies setup
             powerups = parsePowerups companies passengers setup in
         Game {
+          _myGuid = myId,
           _gameMap = map,
           _players = players,
           _companies = companies,

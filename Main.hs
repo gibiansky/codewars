@@ -29,4 +29,4 @@ main = do
       send orders
 
 doOrders :: Game -> Command
-doOrders = undefined
+doOrders = error "not implemented yet"
