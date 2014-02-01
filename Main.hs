@@ -5,12 +5,7 @@ module Main where
 import ClassyPrelude
 import XML
 import WindwardopolisClient
-
-
--- main = do 
---   contents <- readFile "test.xml"
---   parsed <- readSetup contents
---   print "Parsed."
+import Types
 
 main :: IO ()
 main = do
@@ -20,6 +15,18 @@ main = do
   putStrLn$ "Connecting to "++serverAddr
   
   runClient (unpack serverAddr) "1707" $ \(send, get) -> do
-    send "<join name='hi' school='foobar' language='haskell'/>"
-    msg <- get
-    putStrLn$ pack msg
+    -- Join the game
+    send $ Join "Brainfuck" "ÜNICÖDE Y Ü NO CÓDE?!" "Harvard Med" 
+
+    stateVar <- newEmptyMVar
+    forever $ do
+      -- intialize game
+      SetupMessage game <- get
+      putMVar stateVar game
+
+      -- send initial orders
+      let orders = doOrders game 
+      send orders
+
+doOrders :: Game -> Command
+doOrders = undefined

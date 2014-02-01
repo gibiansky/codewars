@@ -20,7 +20,7 @@ data RoadDirection = NORTH_SOUTH | EAST_WEST | INTERSECTION | NORTH_UTURN
 
 data StopDirection = StopEast | StopWest | StopNorth | StopSouth deriving (Show, Eq)
 
-data TileType = BusStop | CoffeeBuilding | CoffeeStop | CompanyTile | Park | Road RoadDirection (Maybe StopDirection)
+data TileType = BusStop | CoffeeBuilding | CoffeeStop | CompanyTile | Park | Road RoadDirection [StopDirection]
               deriving (Show, Eq)
 makeLenses ''TileType
 
@@ -100,6 +100,7 @@ data Game = Game {
   _passengers :: [Passenger],
   _powerups :: [Powerup]
   }
+  deriving Show
 
 data OrderType = DrawCard | PlayCard | DiscardCard
 
@@ -120,3 +121,7 @@ data Command
     | Ready Path Pickups
     | Move Path Pickups
     | CardOrder OrderType Powerup
+    deriving Show
+
+data Message = SetupMessage Game
+             deriving Show
