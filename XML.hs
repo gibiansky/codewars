@@ -1,6 +1,7 @@
 {-# LANGUAGE RankNTypes, OverloadedStrings, NoImplicitPrelude #-}
 module XML (
-  readSetup              
+  readSetup,
+  encodeCommand
   ) where
 
 import ClassyPrelude hiding (Element, Map)
@@ -8,6 +9,7 @@ import Prelude (read)
 import Text.XML as XML
 import Text.XML.Lens as Lens
 import Control.Lens
+import qualified Data.Map as Map
 
 import Types
 
@@ -178,3 +180,16 @@ readSetup string =
           _passengers = passengers,
           _powerups = powerups
         }
+
+encodeCommand :: Command -> String
+encodeCommand cmd = unpack $ renderText def doc
+  where
+    prologue = Prologue [] Nothing []
+    doc = Document prologue root []
+    root = mkCmd cmd
+
+    mkCmd :: Command -> Element
+    mkCmd (Join lang name school) =
+      let attrs :: Map.Map Name Text
+          attrs = Map.fromList [("language", pack lang), ("name", pack name), ("school", pack school)] in
+      Element "join" attrs []

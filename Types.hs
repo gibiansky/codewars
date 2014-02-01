@@ -2,11 +2,12 @@
 module Types where
 
 import Control.Lens
+import Data.Monoid
 
 data Location = Loc {
     _x :: Int,
     _y :: Int
-  } deriving Show
+  } deriving (Show, Eq)
 
 makeLenses ''Location
 
@@ -15,20 +16,25 @@ data RoadDirection = NORTH_SOUTH | EAST_WEST | INTERSECTION | NORTH_UTURN
                    | EAST_UTURN | SOUTH_UTURN | WEST_UTURN | T_NORTH
                    | T_EAST | T_SOUTH | T_WEST | CURVE_NE | CURVE_NW
                    | CURVE_SE | CURVE_SW
-  deriving Show
+  deriving (Show, Eq)
 
-data StopDirection = StopEast | StopWest | StopNorth | StopSouth deriving Show
+data StopDirection = StopEast | StopWest | StopNorth | StopSouth deriving (Show, Eq)
 
 data TileType = BusStop | CoffeeBuilding | CoffeeStop | CompanyTile | Park | Road RoadDirection (Maybe StopDirection)
-              deriving Show
+              deriving (Show, Eq)
 makeLenses ''TileType
 
 data Tile = Tile {
     _tileLoc :: Location,
     _tileType :: TileType
   }
-  deriving Show
+  deriving (Show, Eq)
 makeLenses ''Tile
+
+instance Ord Tile where
+    compare one two =   compare (one ^. tileLoc . x) (two ^. tileLoc . x)
+                    <>  compare (one ^. tileLoc . y) (two ^. tileLoc . y)
+
 
 data Map = Map {
   _width :: Int,
@@ -94,3 +100,11 @@ data Game = Game {
   _passengers :: [Passenger],
   _powerups :: [Powerup]
   }
+
+-- commands to send
+data Command
+     = Join {
+        language :: String,
+        teamName :: String,
+        school :: String      
+      }
