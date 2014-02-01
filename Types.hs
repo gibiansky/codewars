@@ -56,7 +56,8 @@ data Passenger = Passenger {
   _worth :: Int,
   _route :: [Company],
   _enemies :: [Passenger],
-  _passengerName :: String
+  _passengerName :: String,
+  _passengerLoc :: Location
   }
   deriving Show
 makeLenses ''Passenger
