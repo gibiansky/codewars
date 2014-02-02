@@ -86,7 +86,11 @@ makeLenses ''Powerup
 data Player = Player {
       _uuid :: String,
       _playerLoc :: Location,
-      _playerAngle :: Int
+      _playerAngle :: Int,
+      _score :: Maybe Float,
+      _scoreTotal :: Maybe Float,
+      _coffees :: Maybe Int,
+      _maxCards :: Maybe Int
     }
     deriving Show
 makeLenses ''Player
@@ -108,6 +112,7 @@ data Game = Game {
   _powerups :: [Powerup]
   }
   deriving Show
+makeLenses ''Game
 
 data OrderType = DrawCard | PlayCard | DiscardCard
 
@@ -130,9 +135,8 @@ data Command
     | CardOrder OrderType Powerup
     deriving Show
 
-data GameUpdate = GameUpdate {
-                
-    }
+data GameUpdate = NoPathUpdate Game
+                | UpdateUpdate Game
     deriving Show
 
 data Message = SetupMessage Game

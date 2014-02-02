@@ -11,7 +11,7 @@ import Text.XML.Lens as Lens
 import Control.Lens
 import qualified Data.Map as Map
 import Data.List.Utils (split)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, fromJust)
 import Data.Array
 
 import Types
@@ -22,6 +22,9 @@ subnodes str = entire . el str
 
 int :: Text -> Int
 int = read . unpack
+
+float :: Text -> Float
+float = read . unpack
 
 parseTileType :: Text -> TileType
 parseTileType "PARK" = Park
@@ -140,7 +143,11 @@ parsePlayers setup = players
       Player {
         _uuid = unpack $ player ^. attr "guid",
         _playerLoc = Loc (int $ player ^. attr "limo-x") (int $ player ^. attr "limo-y"),
-        _playerAngle = int $ player ^. attr "limo-angle"
+        _playerAngle = int $ player ^. attr "limo-angle",
+        _score  = float <$> player ^. attribute "score",
+        _scoreTotal  = float <$> player ^. attribute "total-score",
+        _coffees  = int <$> player ^. attribute "coffee-servings",
+        _maxCards  = int <$> player ^. attribute "cards-max"
         }
 
 getCompany :: [Company] -> String -> Company
@@ -158,8 +165,8 @@ getPassenger (pass:rest) name =
   else getPassenger rest name
 
 
-parsePassengers :: [Company] -> Element -> [Passenger]
-parsePassengers companies setup = passengers
+parsePassengers :: Bool -> [Company] -> Element -> [Passenger]
+parsePassengers isUpdate companies setup = passengers
   where
     passengers = setup ^.. subnodes "passenger" . to fromEl
     fromEl pass =
@@ -176,8 +183,12 @@ parsePassengers companies setup = passengers
         getCompany companies lobby ^. companyLoc
 
     parseRoute pass =
-      let names = pass ^.. subnodes "route" . text . to unpack in
-        map (getCompany companies) names
+      if not isUpdate
+      then let names = pass ^.. subnodes "route" . text . to unpack in
+                map (getCompany companies) names
+      else let names = pass ^. attr "route" . to (split ";" . unpack) in
+                map (getCompany companies) names
+
 
     parseEnemies pass =
       let names = pass ^.. subnodes "enemy" . text . to unpack in
@@ -194,7 +205,7 @@ parseSetup string =
             players = parsePlayers setup
             stores = parseStores setup
             companies = parseCompanies setup
-            passengers = parsePassengers companies setup
+            passengers = parsePassengers False companies setup
             powerups = parsePowerups companies passengers setup in
         Game {
           _myGuid = myId,
@@ -205,6 +216,22 @@ parseSetup string =
           _passengers = passengers,
           _powerups = powerups
         }
+
+parseStatus :: String -> Game -> GameUpdate
+parseStatus str game = 
+  let doc = parseText_ def (pack str) in
+    case doc ^.. root . subnodes "status" of
+      [] -> error "No status tag."
+      [status] ->
+        let cause = unpack $ status ^. attr "status"
+            guid = unpack $ status ^. attr "player-guid"
+            play = parsePlayers status
+            pass = parsePassengers True  (game ^. companies) status
+            newGame = game & passengers .~ pass
+                           & players .~ play
+          in case cause of
+               "NO_PATH" -> NoPathUpdate newGame
+               "UPDATE" -> UpdateUpdate newGame
 
 encodeCommand :: Command -> String
 encodeCommand cmd = drop 1 $  dropWhile (/= '>') $ unpack $ renderText def doc
@@ -257,12 +284,13 @@ encodeCommand cmd = drop 1 $  dropWhile (/= '>') $ unpack $ renderText def doc
             StopCar -> [("card", "STOP_CAR")]
 
 
-data MessageType = Setup
+data MessageType = Setup | Update
 
-parseMessage :: String -> Message
-parseMessage string =
+parseMessage :: Maybe Game -> String -> Message
+parseMessage game string =
   case find (isMessageType string) [Setup] of
     Just Setup -> SetupMessage $ parseSetup string
+    Just Update -> UpdateMessage $ parseStatus string $ fromJust game
     Nothing -> error "Unknown message type."
   where
     parsed = parseText_ def (pack string)

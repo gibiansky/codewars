@@ -21,12 +21,13 @@ main = do
 
     stateVar <- newEmptyMVar
     -- intialize game
-    SetupMessage game <- get
+    SetupMessage game <- get Nothing
     putMVar stateVar game
 
     forever $ do
       -- read an update
-      message <- get
+      state <- readMVar stateVar
+      message <-  get (Just state)
       case message of
         UpdateMessage update ->
           modifyMVar_ stateVar (return . updateState update)

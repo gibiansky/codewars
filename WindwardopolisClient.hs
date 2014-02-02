@@ -13,7 +13,7 @@ import qualified Data.ByteString.Lazy.Char8 as C
 import Types
 import XML
 
-runClient :: HostName -> ServiceName -> ((Command -> IO (), IO Message) -> IO ()) -> IO ()
+runClient :: HostName -> ServiceName -> ((Command -> IO (), Maybe Game -> IO Message) -> IO ()) -> IO ()
 runClient host port prog =
   connect host port $ \(sock, sockAddr) -> prog (sendMessage sock, getMessage sock)
 
@@ -36,13 +36,13 @@ sendMessage sock cmd
         len     = runPut $ putWord32le $ fromIntegral $ length msg
         send' m = void $ send sock m -- TODO: check length
 
-getMessage :: Socket -> IO Message
-getMessage sock = do
+getMessage :: Socket -> Maybe Game -> IO Message
+getMessage sock game = do
   len <- runGet getWord32le <$> recv sock 4
   msg <- recv' sock $ fromIntegral len
   let str = C.unpack msg
   logger str
-  return $ parseMessage str
+  return $ parseMessage game str
 
 recv' :: Socket -> Int64 -> IO C.ByteString
 recv' sock = recv'' sock ""
