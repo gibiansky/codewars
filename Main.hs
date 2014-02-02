@@ -8,6 +8,9 @@ import WindwardopolisClient
 import Types
 import System.Exit
 import Graph
+import Data.List (maximumBy)
+
+import Control.Lens
 
 main :: IO ()
 main = do
@@ -46,22 +49,17 @@ doOrders = error "not implemented yet"
 getGame :: GameUpdate -> Game
 getGame (NoPathUpdate game) = game
 getGame (UpdateUpdate game) = game
-{-
+getGame (PassengerPickedUpUpdate game) = game
 
-herusticFun :: Passenger -> Passenger -> Int
-herusticFun passenger1 passenger2 = 1
+heuristic :: Passenger -> Passenger -> Int
+heuristic passenger1 passenger2 = 1
 
-findBestPair :: Game -> Tuple Passenger Passenger
-findBestPair game = 
+findBestPair :: Game -> (Passenger, Passenger)
+findBestPair game = bestPair
   where 
-    isAvaliable passenger = (passenger ^. Status) == Unserviced
-    avaliablePassengers = filter isAvaliable (game ^. passengers)
-    allPairs = sequence [game ^. passengers, game ^. passengers]
-    maximumBy (compare `on` snd) $ map (\[passenger1, passenger2] -> 
-      (
-        (passenger1, passenger2),
-        (herusticFun passenger1 passenger2)
-      )
-    ) allPairs
-
--}
+    isAvaliable passenger = (passenger ^. passengerStatus) == Waiting
+    availablePassengers = filter isAvaliable (game ^. passengers)
+    allPairs = map pairToTuple $ sequence [availablePassengers, availablePassengers]
+    pairToTuple [a, b] = (a, b)
+    scores = map (uncurry heuristic) allPairs
+    bestPair = fst $ maximumBy (compare `on` snd) $ zip allPairs scores 

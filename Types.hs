@@ -53,7 +53,7 @@ data Company = Company {
   deriving Show
 makeLenses ''Company
 
-data PassengerStatus = Transit | Waiting deriving Show
+data PassengerStatus = Transit | Waiting deriving (Show, Eq)
 
 data Passenger = Passenger {
   _worth :: Int,
@@ -137,6 +137,13 @@ data Command
 
 data GameUpdate = NoPathUpdate Game
                 | UpdateUpdate Game
+                | PassengerPickedUpUpdate Game
+                | PassengerDeliveredUpdate Game
+                | PassengerDeliveredAndPickedUpUpdate Game
+                | PassengerRefusedEnemyUpdate Game
+                | CoffeeStoreCarRestockedUpdate Game
+                | PassengerAbandoned Game
+                | PassengerNoActionUpdate Game
     deriving Show
 
 data Message = SetupMessage Game

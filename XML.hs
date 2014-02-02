@@ -232,6 +232,14 @@ parseStatus str game =
           in case cause of
                "NO_PATH" -> NoPathUpdate newGame
                "UPDATE" -> UpdateUpdate newGame
+               "PASSENGER_PICKED_UP" -> PassengerPickedUpUpdate newGame
+               "PASSENGER_NO_ACTION" -> PassengerNoActionUpdate newGame
+               "PASSENGER_DELIVERED_AND_PICKED_UP" ->PassengerDeliveredAndPickedUpUpdate newGame 
+               "PASSENGER_DELIVERED" ->PassengerDeliveredUpdate newGame 
+               "PASSENGER_REFUSED_ENEMY" ->PassengerRefusedEnemyUpdate newGame 
+               "COFFEE_STORE_CAR_RESTOCKED" -> CoffeeStoreCarRestockedUpdate newGame
+               "PASSENGER_ABANDONED" -> PassengerAbandoned newGame
+               _ -> UpdateUpdate newGame
 
 encodeCommand :: Command -> String
 encodeCommand cmd = drop 1 $  dropWhile (/= '>') $ unpack $ renderText def doc
