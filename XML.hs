@@ -158,7 +158,7 @@ getCompany (comp:rest) name =
   else getCompany rest name
 
 getPassenger :: [Passenger] -> String -> Passenger
-getPassenger [] _ = error "No such company"
+getPassenger [] _ = error "No such passenger"
 getPassenger (pass:rest) name =
   if pass ^. passengerName == name
   then pass
