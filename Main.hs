@@ -50,13 +50,19 @@ getGame :: GameUpdate -> Game
 getGame (NoPathUpdate game) = game
 getGame (UpdateUpdate game) = game
 getGame (PassengerPickedUpUpdate game) = game
+getGame (PassengerDeliveredUpdate game) = game
+getGame (PassengerDeliveredAndPickedUpUpdate game) = game
+getGame (PassengerRefusedEnemyUpdate game) = game
+getGame (CoffeeStoreCarRestockedUpdate game) = game
+getGame (PassengerAbandoned game) = game
+getGame (PassengerNoActionUpdate game) = game
 
 heuristic :: Passenger -> Passenger -> Int
 heuristic passenger1 passenger2 = 1
 
 findBestPair :: Game -> (Passenger, Passenger)
 findBestPair game = bestPair
-  where 
+  where
     isAvaliable passenger = (passenger ^. passengerStatus) == Waiting
     availablePassengers = filter isAvaliable (game ^. passengers)
     allPairs = map pairToTuple $ sequence [availablePassengers, availablePassengers]
