@@ -31,6 +31,7 @@ main = do
     -- intialize game
     SetupMessage game <- get Nothing
     putMVar stateVar game
+    counterVar <- newMVar 0
 
     forever $ do
       -- read an update
@@ -44,6 +45,15 @@ main = do
         Exit -> do
           putStrLn "Received exit message"
           exitSuccess
+
+      counter <- takeMVar counterVar
+      let order = case counter `mod` 4 of
+                    0 ->CardOrder PlayCard RelocateAllPassengers
+                    1 ->CardOrder PlayCard RelocateAllCars
+                    2 ->CardOrder DrawCard RelocateAllCars
+                    3 ->CardOrder DrawCard RelocateAllPassengers
+      send order
+      putMVar counterVar (counter + 1)
       
       -- compute orders and send them
       orders <- doOrders <$> readMVar stateVar
@@ -51,22 +61,7 @@ main = do
 
 doOrders :: Game -> [Command]
 doOrders game =
-  let (p1, p2)  = findBestPair game
-      selfLoc   = self^.playerLoc
-      p1Loc     = loc p1
-      p2Loc     = loc p2
-      loc (Pass a) = a ^. passengerLoc
-      loc (Coffee a) = a ^. storeLoc
-      destToPass (Pass a) = [a] 
-      destToPass (Coffee _) = []
-      Just self = getPlayerByGuid (game^.players) (game^.myGuid)
-      curTile   = (game^.gameMap.tiles) ! (selfLoc^.x, selfLoc^.y)
-      tile1     = (game^.gameMap.tiles) ! (p1Loc^.x, p1Loc^.y)
-      tile2     = (game^.gameMap.tiles) ! (p2Loc^.x, p2Loc^.y)
-  in
-  case pathToDestination (game^.gameMap) curTile tile1 of
-    Nothing   -> []
-    Just path -> [Move (map (^.tileLoc) path) (destToPass p1 ++ destToPass p2)]
+  [Move [] []]
 
 
 getGame :: GameUpdate -> Game
@@ -89,6 +84,10 @@ data Destination = Pass Passenger | Coffee Store
 heuristic :: Game -> Location -> Destination -> Destination -> Int
 heuristic game curLoc oneD twoD = 
   case (oneD, twoD) of
+    {-
+    (Coffee one, Coffee two) -> -100
+    _ -> 100
+    -}
     (Pass one, Pass two) ->
       let mp = game^.gameMap
           oneRoute = head $ one^.route
@@ -109,7 +108,6 @@ heuristic game curLoc oneD twoD =
         0 -> 1000000000
         _ -> heurDest game curLoc (one^.passengerLoc) (two^.storeLoc)
     (Coffee one, Coffee two) -> 10000000
-
   where
     Just self = getPlayerByGuid (game^.players) (game^.myGuid)
     myCoffee = fromMaybe 3 $ self^.coffees
@@ -130,8 +128,12 @@ findBestPair game = bestPair
     allPairs = filter allowed $ map pairToTuple $ sequence [possibleDests, possibleDests]
     Just self = getPlayerByGuid (game^.players) (game^.myGuid)
     scores = map (uncurry $ heuristic game (self^.playerLoc)) allPairs
+    allowed (Coffee x, Coffee y) = True
+    allowed _ = False
+    {-
     allowed (Pass x, Pass y) = (x ^. passengerName) /= (y ^. passengerName)
     allowed _ = True
+    -}
     availablePassengers = filter isAvaliable (game ^. passengers)
     isAvaliable passenger =
       (passenger ^. passengerStatus) == Waiting &&

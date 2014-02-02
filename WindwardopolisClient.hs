@@ -18,7 +18,7 @@ runClient host port prog =
   connect host port $ \(sock, sockAddr) -> prog (sendMessage sock, getMessage sock)
 
 debug :: Bool
-debug = True
+debug = False
 
 logger :: String -> IO ()
 logger str =
