@@ -50,7 +50,7 @@ data Company = Company {
   _companyName :: String,
   _companyLoc :: Location
   }
-  deriving Show
+  deriving (Eq, Show)
 makeLenses ''Company
 
 data PassengerStatus = Transit | Waiting deriving (Show, Eq)
@@ -63,7 +63,7 @@ data Passenger = Passenger {
   _passengerLoc :: Location,
   _passengerStatus :: PassengerStatus
   }
-  deriving Show
+  deriving (Eq, Show)
 makeLenses ''Passenger
 
 data Powerup
