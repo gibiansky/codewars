@@ -123,7 +123,7 @@ parseStores setup = stores
     fromEl player =
       Store {
         _storeName = unpack $ player ^. attr "name",
-        _storeLocation = Loc (int $ player ^. attr "bus-stop-x") (int $ player ^. attr "bus-stop-y")
+        _storeLoc = Loc (int $ player ^. attr "bus-stop-x") (int $ player ^. attr "bus-stop-y")
         }
 
 parseCompanies :: Element -> [Company]

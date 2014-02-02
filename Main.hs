@@ -10,7 +10,7 @@ import WindwardopolisClient
 import Types
 import System.Exit
 import Graph
-import Data.List (maximumBy)
+import Data.List (minimumBy)
 import Prelude (head)
 
 import Control.Lens
@@ -53,8 +53,12 @@ doOrders :: Game -> [Command]
 doOrders game =
   let (p1, p2)  = findBestPair game
       selfLoc   = self^.playerLoc
-      p1Loc     = p1^.passengerLoc
-      p2Loc     = p2^.passengerLoc
+      p1Loc     = loc p1
+      p2Loc     = loc p2
+      loc (Pass a) = a ^. passengerLoc
+      loc (Coffee a) = a ^. storeLoc
+      destToPass (Pass a) = [a] 
+      destToPass (Coffee _) = []
       Just self = getPlayerByGuid (game^.players) (game^.myGuid)
       curTile   = (game^.gameMap.tiles) ! (selfLoc^.x, selfLoc^.y)
       tile1     = (game^.gameMap.tiles) ! (p1Loc^.x, p1Loc^.y)
@@ -62,7 +66,7 @@ doOrders game =
   in
   case pathToDestination (game^.gameMap) curTile tile1 of
     Nothing   -> []
-    Just path -> [Move (map (^.tileLoc) path) [p1, p2]]
+    Just path -> [Move (map (^.tileLoc) path) (destToPass p1 ++ destToPass p2)]
 
 
 getGame :: GameUpdate -> Game
@@ -80,26 +84,54 @@ getGame (PowerupStatus game) = game
 tileAt :: Map -> Location -> Tile
 tileAt map loc = (map^.tiles) ! (loc^.x, loc^.y)
 
-heuristic :: Game -> Location -> Passenger -> Passenger -> Int
-heuristic game curLoc one two = 
-  let mp = game^.gameMap
-      oneRoute = head $ one^.route
-      twoRoute = head $ two^.route
-      curTile = tileAt mp curLoc
-      dToFirst = pathToDestination mp curTile (tileAt mp (one^.passengerLoc))
-      firstToDest = pathToDestination mp (tileAt mp (one^.passengerLoc)) (tileAt mp (oneRoute^.companyLoc))
-      firstDestToSecond = pathToDestination mp  (tileAt mp (oneRoute^.companyLoc)) (tileAt mp (two^.passengerLoc))
-      secondToDest = pathToDestination mp (tileAt mp (two^.passengerLoc)) (tileAt mp (two^.passengerLoc)) in
-    length dToFirst + length firstToDest + length firstDestToSecond + length secondToDest
+data Destination = Pass Passenger | Coffee Store
 
-findBestPair :: Game -> (Passenger, Passenger)
+heuristic :: Game -> Location -> Destination -> Destination -> Int
+heuristic game curLoc oneD twoD = 
+  case (oneD, twoD) of
+    (Pass one, Pass two) ->
+      let mp = game^.gameMap
+          oneRoute = head $ one^.route
+          twoRoute = head $ two^.route
+          curTile = tileAt mp curLoc
+          dToFirst = pathToDestination mp curTile (tileAt mp (one^.passengerLoc))
+          firstToDest = pathToDestination mp (tileAt mp (one^.passengerLoc)) (tileAt mp (oneRoute^.companyLoc))
+          firstDestToSecond = pathToDestination mp  (tileAt mp (oneRoute^.companyLoc)) (tileAt mp (two^.passengerLoc))
+          secondToDest = pathToDestination mp (tileAt mp (two^.passengerLoc)) (tileAt mp (two^.passengerLoc)) in
+        length dToFirst + length firstToDest + length firstDestToSecond + length secondToDest
+    (Coffee one, Pass two) -> 
+      case myCoffee of
+        0 -> -100
+        1 -> heurDest game curLoc (one^.storeLoc) (two^.passengerLoc)
+        _ -> 10000000
+    (Pass one, Coffee two) -> 
+      case myCoffee of
+        0 -> 1000000000
+        _ -> heurDest game curLoc (one^.passengerLoc) (two^.storeLoc)
+    (Coffee one, Coffee two) -> 10000000
+
+  where
+    Just self = getPlayerByGuid (game^.players) (game^.myGuid)
+    myCoffee = fromMaybe 3 $ self^.coffees
+
+    heurDest game curLoc loc1 loc2 = 
+      let mp = game^.gameMap
+          curTile = tileAt mp curLoc
+          dToFirst = pathToDestination mp curTile (tileAt mp loc1)
+          firstToSecond = pathToDestination mp (tileAt mp loc1) (tileAt mp loc2) in
+        length dToFirst + length firstToSecond
+
+
+findBestPair :: Game -> (Destination, Destination)
 findBestPair game = bestPair
   where
-    bestPair = fst $ maximumBy (compare `on` snd) $ zip allPairs scores 
-    allPairs = filter allowed $ map pairToTuple $ sequence [availablePassengers, availablePassengers]
+    bestPair = fst $ minimumBy (compare `on` snd) $ zip allPairs scores 
+    possibleDests = map Pass availablePassengers ++ map Coffee (game^.stores)
+    allPairs = filter allowed $ map pairToTuple $ sequence [possibleDests, possibleDests]
     Just self = getPlayerByGuid (game^.players) (game^.myGuid)
     scores = map (uncurry $ heuristic game (self^.playerLoc)) allPairs
-    allowed (x, y) = (x ^. passengerName) /= (y ^. passengerName)
+    allowed (Pass x, Pass y) = (x ^. passengerName) /= (y ^. passengerName)
+    allowed _ = True
     availablePassengers = filter isAvaliable (game ^. passengers)
     isAvaliable passenger =
       (passenger ^. passengerStatus) == Waiting &&

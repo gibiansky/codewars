@@ -97,7 +97,7 @@ data Player = Player {
 makeLenses ''Player
 
 data Store = Store {
-    _storeLocation :: Location,
+    _storeLoc :: Location,
     _storeName :: String
   }
   deriving Show
