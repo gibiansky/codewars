@@ -4,6 +4,7 @@ module Main where
 
 import ClassyPrelude
 import Data.Maybe
+import Data.Array
 import XML
 import WindwardopolisClient
 import Types
@@ -49,16 +50,20 @@ main = do
 doOrders :: Game -> [Command]
 doOrders game =
   let (p1, p2) = findBestPair game
-      curTile  = getPlayer (game^.players) (game^.myGuid) (game^.gameMap.tiles ! (x,y))
-      tile1    = (game^.gameMap.tiles ! (x,y))
+      self = getPlayerByGuid (game^.players) (game^.myGuid)
+      curTile  = (game^.gameMap.tiles) ! (x,y)
+      tile1    = (game^.gameMap.tiles) ! (x,y)
+      x = 0
+      y = 0
   in
-  case (pathToDestination (game^.gameMap) curTile tile1)
-  of
-  [
-    Move
-      
-      [p1^.passengerLoc, p2^.passengerLoc] [p1, p2]
-  ]
+  case (pathToDestination (game^.gameMap) curTile tile1) of
+    Nothing -> []
+    Just path -> []
+  -- [
+  --   Move
+  --     [p1^.passengerLoc, p2^.passengerLoc]
+  --     [p1, p2]
+  -- ]
 
 
 getGame :: GameUpdate -> Game

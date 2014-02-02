@@ -2,7 +2,7 @@
 module XML (
   parseMessage,
   encodeCommand,
-  getCompany, getPlayer, getPassenger
+  getCompany, getPlayer, getPassenger, getPlayerByGuid
   ) where
 
 import ClassyPrelude hiding (Element, Map)
