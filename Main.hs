@@ -49,21 +49,18 @@ main = do
 
 doOrders :: Game -> [Command]
 doOrders game =
-  let (p1, p2) = findBestPair game
-      self = getPlayerByGuid (game^.players) (game^.myGuid)
-      curTile  = (game^.gameMap.tiles) ! (x,y)
-      tile1    = (game^.gameMap.tiles) ! (x,y)
-      x = 0
-      y = 0
+  let (p1, p2)  = findBestPair game
+      selfLoc   = self^.playerLoc
+      p1Loc     = p1^.passengerLoc
+      p2Loc     = p2^.passengerLoc
+      Just self = getPlayerByGuid (game^.players) (game^.myGuid)
+      curTile   = (game^.gameMap.tiles) ! (selfLoc^.x, selfLoc^.y)
+      tile1     = (game^.gameMap.tiles) ! (p1Loc^.x, p1Loc^.y)
+      tile2     = (game^.gameMap.tiles) ! (p2Loc^.x, p2Loc^.y)
   in
   case (pathToDestination (game^.gameMap) curTile tile1) of
-    Nothing -> []
-    Just path -> []
-  -- [
-  --   Move
-  --     [p1^.passengerLoc, p2^.passengerLoc]
-  --     [p1, p2]
-  -- ]
+    Nothing   -> []
+    Just path -> [Move (map (^.tileLoc) path) [p1, p2]]
 
 
 getGame :: GameUpdate -> Game
