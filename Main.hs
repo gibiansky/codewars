@@ -31,16 +31,16 @@ main = do
       case message of
         UpdateMessage update ->
           modifyMVar_ stateVar (return . updateState update)
-
+        Exit ->
+          putStrLn "Received exit message"
+          exitSuccess
+      
       -- compute orders and send them
       orders <- doOrders <$> readMVar stateVar
       send orders
 
 doOrders :: Game -> Command
 doOrders = error "not implemented yet"
-
-updateState :: GameUpdate -> Game -> Game
-updateState update game = game
 
 {-
 

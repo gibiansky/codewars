@@ -141,4 +141,5 @@ data GameUpdate = NoPathUpdate Game
 
 data Message = SetupMessage Game
              | UpdateMessage GameUpdate
+             | Exit
              deriving Show
