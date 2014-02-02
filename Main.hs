@@ -22,7 +22,8 @@ main = do
   
   runClient (unpack serverAddr) "1707" $ \(send, get) -> do
     -- Join the game
-    send $ Join "Brainfuck" "ÜNICÖDE Y Ü NO CÓDE?!" "Harvard Med" 
+    --send $ Join "Brainfuck" "ÜNICÖDE Y Ü NO CÓDE?!" "Harvard Med" 
+    send $ Join "Brainfuck" "UNICODE Y U NO CODE?!" "Harvard Med" 
 
     stateVar <- newEmptyMVar
     -- intialize game

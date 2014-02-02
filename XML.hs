@@ -136,21 +136,34 @@ parseCompanies setup = companies
         _companyLoc = Loc (int $ company ^. attr "bus-stop-x") (int $ company ^. attr "bus-stop-y")
         }
 
-parsePlayers :: Element -> [Player]
-parsePlayers setup = players
+parsePlayers :: [Player] -> Element -> [Player]
+parsePlayers olds setup = players
   where
     players = setup ^.. subnodes "player" . to fromEl
     fromEl player =
-      Player {
-        _playerName = unpack $ player ^. attr "name",
-        _uuid = unpack $ player ^. attr "guid",
-        _playerLoc = Loc (int $ player ^. attr "limo-x") (int $ player ^. attr "limo-y"),
-        _playerAngle = int $ player ^. attr "limo-angle",
-        _score  = float <$> player ^. attribute "score",
-        _scoreTotal  = float <$> player ^. attribute "total-score",
-        _coffees  = int <$> player ^. attribute "coffee-servings",
-        _maxCards  = int <$> player ^. attribute "cards-max"
-        }
+      let uuid = unpack $ player ^. attr "guid"
+          oldPlayer = getPlayerByGuid olds uuid in
+        case oldPlayer of
+          Nothing ->
+            Player {
+              _playerName = unpack $ player ^. attr "name",
+              _uuid = uuid,
+              _playerLoc = Loc (int $ player ^. attr "limo-x") (int $ player ^. attr "limo-y"),
+              _playerAngle = int $ player ^. attr "limo-angle",
+              _score  = float <$> player ^. attribute "score",
+              _scoreTotal  = float <$> player ^. attribute "total-score",
+              _coffees  = int <$> player ^. attribute "coffee-servings",
+              _maxCards  = int <$> player ^. attribute "cards-max"
+              }
+          Just play ->
+            play {
+            _playerLoc = Loc (int $ player ^. attr "limo-x") (int $ player ^. attr "limo-y"),
+            _playerAngle = int $ player ^. attr "limo-angle",
+            _score  = float <$> player ^. attribute "score",
+            _scoreTotal  = float <$> player ^. attribute "total-score",
+            _coffees  = int <$> player ^. attribute "coffee-servings",
+            _maxCards  = int <$> player ^. attribute "cards-max"
+          }
 
 getCompany :: [Company] -> String -> Company
 getCompany [] name = error $ "No such company: '" ++ name ++ "'"
@@ -215,7 +228,7 @@ parseSetup string =
       [setup] ->
         let myId = unpack $ setup ^. attr "my-guid"
             map = parseMap setup
-            players = parsePlayers setup
+            players = parsePlayers [] setup
             stores = parseStores setup
             companies = parseCompanies setup
             passengers = parsePassengers False companies players setup
@@ -238,7 +251,7 @@ parseStatus str game =
       [status] ->
         let cause = unpack $ status ^. attr "status"
             guid = unpack $ status ^. attr "player-guid"
-            play = parsePlayers status
+            play = parsePlayers (game ^. players) status
             pass = parsePassengers True (game ^. companies) play status
             newGame = game & passengers .~ pass
                            & players .~ play
