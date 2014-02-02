@@ -2,7 +2,7 @@
 
 module Main where
 
-import ClassyPrelude
+import ClassyPrelude hiding (Map)
 import Data.Maybe
 import Data.Array
 import XML
@@ -11,6 +11,7 @@ import Types
 import System.Exit
 import Graph
 import Data.List (maximumBy)
+import Prelude (head)
 
 import Control.Lens
 
@@ -59,7 +60,7 @@ doOrders game =
       tile1     = (game^.gameMap.tiles) ! (p1Loc^.x, p1Loc^.y)
       tile2     = (game^.gameMap.tiles) ! (p2Loc^.x, p2Loc^.y)
   in
-  case (pathToDestination (game^.gameMap) curTile tile1) of
+  case pathToDestination (game^.gameMap) curTile tile1 of
     Nothing   -> []
     Just path -> [Move (map (^.tileLoc) path) [p1, p2]]
 
@@ -76,15 +77,28 @@ getGame (PassengerAbandoned game) = game
 getGame (PassengerNoActionUpdate game) = game
 getGame (PowerupStatus game) = game
 
-heuristic :: Passenger -> Passenger -> Int
-heuristic passenger1 passenger2 = 1
+tileAt :: Map -> Location -> Tile
+tileAt map loc = (map^.tiles) ! (loc^.x, loc^.y)
+
+heuristic :: Game -> Location -> Passenger -> Passenger -> Int
+heuristic game curLoc one two = 
+  let mp = game^.gameMap
+      oneRoute = head $ one^.route
+      twoRoute = head $ two^.route
+      curTile = tileAt mp curLoc
+      dToFirst = pathToDestination mp curTile (tileAt mp (one^.passengerLoc))
+      firstToDest = pathToDestination mp (tileAt mp (one^.passengerLoc)) (tileAt mp (oneRoute^.companyLoc))
+      firstDestToSecond = pathToDestination mp  (tileAt mp (oneRoute^.companyLoc)) (tileAt mp (two^.passengerLoc))
+      secondToDest = pathToDestination mp (tileAt mp (two^.passengerLoc)) (tileAt mp (two^.passengerLoc)) in
+    length dToFirst + length firstToDest + length firstDestToSecond + length secondToDest
 
 findBestPair :: Game -> (Passenger, Passenger)
 findBestPair game = bestPair
   where
     bestPair = fst $ maximumBy (compare `on` snd) $ zip allPairs scores 
     allPairs = filter allowed $ map pairToTuple $ sequence [availablePassengers, availablePassengers]
-    scores = map (uncurry heuristic) allPairs
+    Just self = getPlayerByGuid (game^.players) (game^.myGuid)
+    scores = map (uncurry $ heuristic game (self^.playerLoc)) allPairs
     allowed (x, y) = (x ^. passengerName) /= (y ^. passengerName)
     availablePassengers = filter isAvaliable (game ^. passengers)
     isAvaliable passenger = (passenger ^. passengerStatus) == Waiting
