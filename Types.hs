@@ -144,6 +144,7 @@ data GameUpdate = NoPathUpdate Game
                 | CoffeeStoreCarRestockedUpdate Game
                 | PassengerAbandoned Game
                 | PassengerNoActionUpdate Game
+                | PowerupStatus Game
     deriving Show
 
 data Message = SetupMessage Game
