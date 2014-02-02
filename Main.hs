@@ -37,6 +37,8 @@ main = do
       case message of
         UpdateMessage update ->
           modifyMVar_ stateVar $ return . const (getGame update)
+        SetupMessage game ->
+          modifyMVar_ stateVar $ return . const game
         Exit -> do
           putStrLn "Received exit message"
           exitSuccess
