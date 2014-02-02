@@ -137,4 +137,5 @@ data GameUpdate = GameUpdate {
 
 data Message = SetupMessage Game
              | UpdateMessage GameUpdate
+             | Exit
              deriving Show
