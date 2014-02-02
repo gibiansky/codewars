@@ -292,15 +292,20 @@ encodeCommand cmd = drop 1 $  dropWhile (/= '>') $ unpack $ renderText def doc
             StopCar -> [("card", "STOP_CAR")]
 
 
-data MessageType = Setup | Update
+data MessageType = Setup | Update | PowerupStat
 
 parseMessage :: Maybe Game -> String -> Message
 parseMessage game string =
-  case find (isMessageType string) [Setup] of
+  case find (isMessageType string) [Setup, Update, PowerupStat] of
     Just Setup -> SetupMessage $ parseSetup string
     Just Update -> UpdateMessage $ parseStatus string $ fromJust game
+    Just PowerupStat -> UpdateMessage (PowerupStatus $ fromJust game)
     Nothing -> error "Unknown message type."
   where
     parsed = parseText_ def (pack string)
     isMessageType str Setup =
       not . null $ parsed ^.. root . subnodes "setup"
+    isMessageType str Update =
+      not . null $ parsed ^.. root . subnodes "status"
+    isMessageType str PowerupStat =
+      not . null $ parsed ^.. root . subnodes "powerup-status"

@@ -3,7 +3,6 @@
 module Main where
 
 import ClassyPrelude
-import Control.Lens
 import Data.Maybe
 import XML
 import WindwardopolisClient
@@ -74,7 +73,8 @@ findBestPair game = bestPair
   where
     isAvaliable passenger = (passenger ^. passengerStatus) == Waiting
     availablePassengers = filter isAvaliable (game ^. passengers)
-    allPairs = map pairToTuple $ sequence [availablePassengers, availablePassengers]
+    allPairs = filter allowed $ map pairToTuple $ sequence [availablePassengers, availablePassengers]
+    allowed (x, y) = (x ^. passengerName) /= (y ^. passengerName)
     pairToTuple [a, b] = (a, b)
     scores = map (uncurry heuristic) allPairs
     bestPair = fst $ maximumBy (compare `on` snd) $ zip allPairs scores 
