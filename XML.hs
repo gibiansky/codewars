@@ -166,6 +166,13 @@ getPlayer (play:rest) name =
   then play
   else getPlayer rest name
 
+getPlayerByGuid :: [Player] -> String -> Maybe Player
+getPlayerByGuid [] guid = Nothing
+getPlayerByGuid (play:rest) guid =
+  if play ^. uuid == guid
+  then Just play
+  else getPlayerByGuid rest guid
+
 getPassenger :: [Passenger] -> String -> Passenger
 getPassenger [] _ = error "No such passenger"
 getPassenger (pass:rest) name =
