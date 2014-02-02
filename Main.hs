@@ -6,6 +6,7 @@ import ClassyPrelude
 import XML
 import WindwardopolisClient
 import Types
+import System.Exit
 import Graph
 
 main :: IO ()
@@ -30,8 +31,8 @@ main = do
       message <-  get (Just state)
       case message of
         UpdateMessage update ->
-          modifyMVar_ stateVar (return . updateState update)
-        Exit ->
+          modifyMVar_ stateVar $ return . const (getGame update)
+        Exit -> do
           putStrLn "Received exit message"
           exitSuccess
       
@@ -42,6 +43,9 @@ main = do
 doOrders :: Game -> Command
 doOrders = error "not implemented yet"
 
+getGame :: GameUpdate -> Game
+getGame (NoPathUpdate game) = game
+getGame (UpdateUpdate game) = game
 {-
 
 herusticFun :: Passenger -> Passenger -> Int
