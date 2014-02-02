@@ -101,5 +101,18 @@ findBestPair game = bestPair
     scores = map (uncurry $ heuristic game (self^.playerLoc)) allPairs
     allowed (x, y) = (x ^. passengerName) /= (y ^. passengerName)
     availablePassengers = filter isAvaliable (game ^. passengers)
-    isAvaliable passenger = (passenger ^. passengerStatus) == Waiting
+    isAvaliable passenger =
+      (passenger ^. passengerStatus) == Waiting &&
+      not (enemyAtDestination game passenger)
     pairToTuple [a, b] = (a, b)
+
+enemyAtDestination :: Game -> Passenger -> Bool
+enemyAtDestination game p = case p^.route of
+  []        -> False
+  company:_ -> any (p `hasEnemy`) (passengersAt game company)
+
+passengersAt :: Game -> Company -> [Passenger]
+passengersAt game c = filter (\p -> p^.passengerLoc == c^.companyLoc) (game^.passengers)
+
+hasEnemy :: Passenger -> Passenger -> Bool
+hasEnemy p1 p2 = p2 `elem` (p1^.enemies)
