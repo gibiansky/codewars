@@ -49,9 +49,16 @@ main = do
 
 doOrders :: Game -> [Command]
 doOrders game =
-  let (p1, p2) = findBestPair game in
+  let (p1, p2) = findBestPair game
+      curTile  = getPlayer (game^.players) (game^.myGuid) (game^.gameMap.tiles ! (x,y))
+      tile1    = (game^.gameMap.tiles ! (x,y))
+  in
+  case (pathToDestination (game^.gameMap) curTile tile1)
+  of
   [
-    Move [p1^.passengerLoc, p2^.passengerLoc] [p1, p2]
+    Move
+      
+      [p1^.passengerLoc, p2^.passengerLoc] [p1, p2]
   ]
 
 
@@ -73,10 +80,10 @@ heuristic passenger1 passenger2 = 1
 findBestPair :: Game -> (Passenger, Passenger)
 findBestPair game = bestPair
   where
-    isAvaliable passenger = (passenger ^. passengerStatus) == Waiting
-    availablePassengers = filter isAvaliable (game ^. passengers)
-    allPairs = filter allowed $ map pairToTuple $ sequence [availablePassengers, availablePassengers]
-    allowed (x, y) = (x ^. passengerName) /= (y ^. passengerName)
-    pairToTuple [a, b] = (a, b)
-    scores = map (uncurry heuristic) allPairs
     bestPair = fst $ maximumBy (compare `on` snd) $ zip allPairs scores 
+    allPairs = filter allowed $ map pairToTuple $ sequence [availablePassengers, availablePassengers]
+    scores = map (uncurry heuristic) allPairs
+    allowed (x, y) = (x ^. passengerName) /= (y ^. passengerName)
+    availablePassengers = filter isAvaliable (game ^. passengers)
+    isAvaliable passenger = (passenger ^. passengerStatus) == Waiting
+    pairToTuple [a, b] = (a, b)
