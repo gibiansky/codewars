@@ -50,7 +50,7 @@ doOrders :: Game -> [Command]
 doOrders game =
   let (p1, p2) = findBestPair game in
   [
-    Ready [p1^.passengerLoc, p2^.passengerLoc] [p1, p2]
+    Move [p1^.passengerLoc, p2^.passengerLoc] [p1, p2]
   ]
 
 
@@ -64,6 +64,7 @@ getGame (PassengerRefusedEnemyUpdate game) = game
 getGame (CoffeeStoreCarRestockedUpdate game) = game
 getGame (PassengerAbandoned game) = game
 getGame (PassengerNoActionUpdate game) = game
+getGame (PowerupStatus game) = game
 
 heuristic :: Passenger -> Passenger -> Int
 heuristic passenger1 passenger2 = 1

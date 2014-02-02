@@ -1,7 +1,8 @@
 {-# LANGUAGE RankNTypes, OverloadedStrings, NoImplicitPrelude #-}
 module XML (
   parseMessage,
-  encodeCommand
+  encodeCommand,
+  getCompany, getPlayer, getPassenger
   ) where
 
 import ClassyPrelude hiding (Element, Map)
@@ -141,6 +142,7 @@ parsePlayers setup = players
     players = setup ^.. subnodes "player" . to fromEl
     fromEl player =
       Player {
+        _playerName = unpack $ player ^. attr "name",
         _uuid = unpack $ player ^. attr "guid",
         _playerLoc = Loc (int $ player ^. attr "limo-x") (int $ player ^. attr "limo-y"),
         _playerAngle = int $ player ^. attr "limo-angle",
@@ -151,11 +153,18 @@ parsePlayers setup = players
         }
 
 getCompany :: [Company] -> String -> Company
-getCompany [] _ = error "No such company"
+getCompany [] name = error $ "No such company: '" ++ name ++ "'"
 getCompany (comp:rest) name =
   if comp ^. companyName == name
   then comp
   else getCompany rest name
+
+getPlayer :: [Player] -> String -> Player
+getPlayer [] name = error $ "No such player: '" ++ name ++ "'"
+getPlayer (play:rest) name =
+  if play ^. playerName == name
+  then play
+  else getPlayer rest name
 
 getPassenger :: [Passenger] -> String -> Passenger
 getPassenger [] _ = error "No such passenger"
@@ -165,8 +174,8 @@ getPassenger (pass:rest) name =
   else getPassenger rest name
 
 
-parsePassengers :: Bool -> [Company] -> Element -> [Passenger]
-parsePassengers isUpdate companies setup = passengers
+parsePassengers :: Bool -> [Company] -> [Player] -> Element -> [Passenger]
+parsePassengers isUpdate companies players setup = passengers
   where
     passengers = setup ^.. subnodes "passenger" . to fromEl
     fromEl pass =
@@ -179,8 +188,12 @@ parsePassengers isUpdate companies setup = passengers
         _passengerStatus = Waiting
         }
     parsePassLoc pass =
-      let lobby = pass ^. attr "lobby" . to unpack in
-        getCompany companies lobby ^. companyLoc
+      let lobby =unpack <$> pass ^. attribute "lobby" 
+          driver = unpack <$> pass ^. attribute "limo-driver" in
+        case (lobby, driver) of
+          (Nothing, Just name) -> getPlayer players name ^. playerLoc
+          (Just name, Nothing) -> getCompany companies name ^. companyLoc
+          _ -> error "Where is this guy?"
 
     parseRoute pass =
       if not isUpdate
@@ -205,7 +218,7 @@ parseSetup string =
             players = parsePlayers setup
             stores = parseStores setup
             companies = parseCompanies setup
-            passengers = parsePassengers False companies setup
+            passengers = parsePassengers False companies players setup
             powerups = parsePowerups companies passengers setup in
         Game {
           _myGuid = myId,
@@ -226,7 +239,7 @@ parseStatus str game =
         let cause = unpack $ status ^. attr "status"
             guid = unpack $ status ^. attr "player-guid"
             play = parsePlayers status
-            pass = parsePassengers True  (game ^. companies) status
+            pass = parsePassengers True (game ^. companies) play status
             newGame = game & passengers .~ pass
                            & players .~ play
           in case cause of

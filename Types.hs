@@ -85,6 +85,7 @@ makeLenses ''Powerup
 
 data Player = Player {
       _uuid :: String,
+      _playerName :: String,
       _playerLoc :: Location,
       _playerAngle :: Int,
       _score :: Maybe Float,
