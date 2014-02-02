@@ -3,6 +3,8 @@
 module Main where
 
 import ClassyPrelude
+import Control.Lens
+import Data.Maybe
 import XML
 import WindwardopolisClient
 import Types
@@ -41,10 +43,15 @@ main = do
       
       -- compute orders and send them
       orders <- doOrders <$> readMVar stateVar
-      send orders
+      mapM send orders
 
-doOrders :: Game -> Command
-doOrders = error "not implemented yet"
+doOrders :: Game -> [Command]
+doOrders game =
+  let (p1, p2) = findBestPair game in
+  [
+    Ready [p1^.passengerLoc, p2^.passengerLoc] [p1, p2]
+  ]
+
 
 getGame :: GameUpdate -> Game
 getGame (NoPathUpdate game) = game
